@@ -1,0 +1,16 @@
+{
+  "routes": [
+    {
+      "route": "/auth/*",
+      "rewrite": "https://puntosventaapi20250820232243-bmexgfahfsdzfhgw.canadacentral-01.azurewebsites.net/auth/*"
+    },
+    {
+      "route": "/api/*",
+      "rewrite": "https://puntosventaapi20250820232243-bmexgfahfsdzfhgw.canadacentral-01.azurewebsites.net/api/*"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/auth/*", "/api/*", "/*.css", "/*.js", "/assets/*", "/*.png", "/*.jpg", "/*.svg"]
+  }
+}
