@@ -90,9 +90,9 @@ export default function Sidebar({ collapsed, onToggle, onLogout }: Props){
 
       <aside
         className={'sidebar' + (collapsed ? ' sidebar-collapsed' : '')}
-        role="navigation"
         aria-label="Barra lateral"
-        aria-expanded={!collapsed}
+        /* aria-expanded se quita del contenedor para cumplir a11y;
+           el control accesible con aria-expanded es el botón de toggle */
         style={isMobile && expanded && !isModalOpen ? { zIndex: 1100 } : undefined}
       >
         <div className="side-header">

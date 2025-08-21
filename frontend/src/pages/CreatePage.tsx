@@ -183,13 +183,17 @@ function MapPickerModal({
   }, []);
 
   useEffect(() => {
-    if (!modalRef.current) return;
-    const modal = new window.bootstrap.Modal(modalRef.current, { backdrop: true, keyboard: true });
+    const modalEl = modalRef.current;
+    if (!modalEl) return;
+
+    const modal = new window.bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
 
     const handleShown = () => {
-      setTimeout(() => mapRef.current?.invalidateSize(), 60);
+      const mapInst = mapRef.current; // copia estable para evitar depender de la ref
+      setTimeout(() => mapInst?.invalidateSize(), 60);
     };
-    modalRef.current.addEventListener('shown.bs.modal', handleShown);
+
+    modalEl.addEventListener('shown.bs.modal', handleShown);
 
     onOpenRef(() => {
       setMarker(null);
@@ -197,7 +201,7 @@ function MapPickerModal({
     });
 
     return () => {
-      modalRef.current?.removeEventListener('shown.bs.modal', handleShown);
+      modalEl.removeEventListener('shown.bs.modal', handleShown);
       try { modal.hide(); } catch {}
     };
   }, [onOpenRef]);
@@ -239,7 +243,8 @@ function MapPickerModal({
               onClick={() => {
                 if (!marker) return;
                 onConfirm(marker.lat, marker.lng);
-                (window.bootstrap.Modal.getInstance(modalRef.current!) as any)?.hide();
+                const inst = window.bootstrap.Modal.getInstance(modalRef.current!);
+                try { inst?.hide(); } catch {}
               }}
             >
               Usar estas coordenadas

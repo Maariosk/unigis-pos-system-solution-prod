@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import authApi, { type AuthUser } from '../api/auth';
 
 type LoginArgs    = { username: string; password: string };
@@ -6,7 +6,7 @@ type RegisterArgs = { username: string; password: string; displayName: string; z
 
 type AuthContextValue = {
   user: AuthUser | null;
-  booting: boolean; // evita redirecciones antes de hidratar
+  booting: boolean; // evita redirecciones 
   login: (args: LoginArgs) => Promise<{ ok: boolean; message?: string }>;
   logout: () => void;
   register: (args: RegisterArgs) => Promise<{ ok: boolean; message?: string }>;
@@ -20,7 +20,6 @@ const LS_LAST = 'pv_lastActivity';
 
 // ===TIEMPO DE INACTIVIDAD===
 const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutos
-
 const ACTIVITY_WRITE_THROTTLE_MS = 15_000; // 15s
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -32,29 +31,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const lastWriteRef = useRef<number>(0);
 
   // ------- helpers de persistencia -------
-  const setUserPersist = (u: AuthUser) => {
+  const setUserPersist = useCallback((u: AuthUser) => {
     localStorage.setItem(LS_USER, JSON.stringify(u));
     // registramos última actividad al hacer login
     localStorage.setItem(LS_LAST, String(Date.now()));
-  };
-  const clearPersist = () => {
+  }, []);
+
+  const clearPersist = useCallback(() => {
     localStorage.removeItem(LS_USER);
     localStorage.removeItem(LS_LAST);
-  };
-  const readUserPersist = (): AuthUser | null => {
+  }, []);
+
+  const readUserPersist = useCallback((): AuthUser | null => {
     const raw = localStorage.getItem(LS_USER);
     if (!raw) return null;
     try { return JSON.parse(raw) as AuthUser; } catch { clearPersist(); return null; }
-  };
-  const readLastActivity = (): number | null => {
+  }, [clearPersist]);
+
+  const readLastActivity = useCallback((): number | null => {
     const raw = localStorage.getItem(LS_LAST);
     if (!raw) return null;
     const n = Number(raw);
     return Number.isFinite(n) ? n : null;
-  };
+  }, []);
 
-  // ------- inactividad: programar cierre -------
-  const scheduleIdleLogout = () => {
+  // ------- API público (callbacks estables) -------
+  const doLogout = useCallback(() => {
+    setUser(null);
+    clearPersist();
+    if (idleTimer.current) {
+      clearTimeout(idleTimer.current);
+      idleTimer.current = null;
+    }
+  }, [clearPersist]);
+
+  const scheduleIdleLogout = useCallback(() => {
     if (idleTimer.current) clearTimeout(idleTimer.current);
     const last = readLastActivity();
     const base = last ?? Date.now();
@@ -64,9 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // si sigue inactivo cuando dispare, cerramos sesión
       doLogout();
     }, delay);
-  };
+  }, [readLastActivity, doLogout]);
 
-  const registerActivity = (force = false) => {
+  const registerActivity = useCallback((force = false) => {
     // sólo si hay usuario logueado
     if (!localStorage.getItem(LS_USER)) return;
 
@@ -76,10 +87,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastWriteRef.current = now;
     localStorage.setItem(LS_LAST, String(now)); // otros tabs también lo verán
     scheduleIdleLogout();
-  };
+  }, [scheduleIdleLogout]);
+
+  const login = useCallback(async ({ username, password }: LoginArgs) => {
+    const res = await authApi.login({ username, password });
+    if (res.success && res.user) {
+      setUser(res.user);
+      setUserPersist(res.user);
+      // Forzar registro inicial para arrancar el contador
+      registerActivity(true);
+      return { ok: true };
+    }
+    return { ok: false, message: res.message ?? 'Usuario o contraseña inválidos.' };
+  }, [registerActivity, setUserPersist]);
+
+  const logout = useCallback(() => {
+    doLogout();
+  }, [doLogout]);
+
+  const register = useCallback(async (args: RegisterArgs) => {
+    const res = await authApi.register(args);
+    return { ok: res.success, message: res.message };
+  }, []);
 
   // ------- ciclo de vida -------
-
   useEffect(() => {
     const u = readUserPersist();
     if (u) {
@@ -95,8 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     setBooting(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [readUserPersist, readLastActivity, clearPersist, scheduleIdleLogout]);
 
   // Renovar actividad con eventos del usuario
   useEffect(() => {
@@ -111,8 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener('mousemove', handler);
       document.removeEventListener('visibilitychange', handler);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [registerActivity]);
 
   // Sincronizar entre pestañas: cambios en usuario o actividad
   useEffect(() => {
@@ -128,41 +157,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ------- API público -------
-  const doLogout = () => {
-    setUser(null);
-    clearPersist();
-    if (idleTimer.current) {
-      clearTimeout(idleTimer.current);
-      idleTimer.current = null;
-    }
-  };
-
-  const login = async ({ username, password }: LoginArgs) => {
-    const res = await authApi.login({ username, password });
-    if (res.success && res.user) {
-      setUser(res.user);
-      setUserPersist(res.user);
-      // Forzar registro inicial para arrancar el contador
-      registerActivity(true);
-      return { ok: true };
-    }
-    return { ok: false, message: res.message ?? 'Usuario o contraseña inválidos.' };
-  };
-
-  const logout = () => doLogout();
-
-  const register = async (args: RegisterArgs) => {
-    const res = await authApi.register(args);
-    return { ok: res.success, message: res.message };
-  };
+  }, [readUserPersist, scheduleIdleLogout]);
 
   const value = useMemo(
     () => ({ user, booting, login, logout, register }),
-    [user, booting]
+    [user, booting, login, logout, register]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
