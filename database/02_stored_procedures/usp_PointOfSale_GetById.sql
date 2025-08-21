@@ -1,0 +1,10 @@
+USE [$(DB_NAME)];
+GO
+CREATE OR ALTER PROCEDURE dbo.usp_PointOfSale_GetById
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT * FROM dbo.PointOfSale WHERE Id = @Id;
+END
+GO

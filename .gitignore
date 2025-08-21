@@ -1,0 +1,21 @@
+@"
+# ===== Node / React =====
+frontend/**/node_modules/
+frontend/**/build/
+frontend/**/dist/
+frontend/**/.env
+frontend/**/.env.*
+
+# ===== .NET =====
+backend/**/bin/
+backend/**/obj/
+backend/**/.vs/
+*.user
+*.suo
+
+# ===== SO / IDE =====
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+"@ | Out-File -Encoding utf8 .gitignore
