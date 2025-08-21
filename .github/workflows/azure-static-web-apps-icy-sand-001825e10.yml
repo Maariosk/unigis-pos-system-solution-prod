@@ -24,23 +24,25 @@ jobs:
         with:
           node-version: '20'
 
-      # El action de SWA puede construir con Oryx, pero aquí forzamos la build de CRA con legacy peer deps
-      - name: Build and Deploy
+      - name: Build And Deploy (Azure Static Web Apps)
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ICY_SAND_001825E10 }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # para comentarios en PR, etc.
+          repo_token: ${{ secrets.GITHUB_TOKEN }} 
           action: "upload"
-          # Rutas relativas a la raíz del repo
+          # Config del repo
           app_location: "frontend"     # carpeta del frontend
           api_location: ""             # sin API de SWA
           output_location: "build"     # carpeta de salida de CRA
-          # Comando explícito de build dentro de app_location
-          app_build_command: "npm ci --legacy-peer-deps && npm run build"
+          production_branch: "main"
+          app_build_command: "npm ci --legacy-peer-deps --no-audit --no-fund && CI=false npm run build"
         env:
-          # Si usas variables para consumir tu backend:
           REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          NPM_CONFIG_LEGACY_PEER_DEPS: true
+          NPM_CONFIG_AUDIT: false
+          NPM_CONFIG_FUND: false
+          CI: false
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
