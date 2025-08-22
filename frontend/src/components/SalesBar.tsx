@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -59,7 +59,6 @@ const PulsingDot = (props: any) => {
 
 const Tip = ({ active, label, payload }: any) => {
   if (!active || !payload?.length) return null;
-
   const venta = Number(
     payload.find((p: any) => p?.name === 'Venta' || p?.dataKey === 'totalSale')?.value ?? 0
   );
@@ -84,8 +83,18 @@ const Tip = ({ active, label, payload }: any) => {
   );
 };
 
-function SalesBar({ data }: { data: Item[] }) {
-  const sorted = [...data].sort((a, b) => b.totalSale - a.totalSale);
+function SalesBar({
+  data,
+  height,
+  aspect = 2,           
+  minHeight = 220,      
+}: {
+  data: Item[];
+  height?: number;
+  aspect?: number;
+  minHeight?: number;
+}) {
+  const sorted = useMemo(() => [...(data ?? [])].sort((a, b) => b.totalSale - a.totalSale), [data]);
 
   if (!sorted.length) {
     return (
@@ -93,13 +102,28 @@ function SalesBar({ data }: { data: Item[] }) {
         Sin datos para mostrar
       </div>
     );
+    }
+
+  // Props responsivos para ResponsiveContainer
+  const containerProps: any = { width: '100%', debounce: 50 };
+  if (typeof height === 'number' && height > 0) {
+    containerProps.height = height;
+  } else {
+    containerProps.aspect = aspect;
+    containerProps.minHeight = minHeight;
   }
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <ComposedChart data={sorted} margin={{ top: 18, right: 28, bottom: 22, left: 10 }}>
+    <ResponsiveContainer {...containerProps}>
+      <ComposedChart data={sorted} margin={{ top: 18, right: 28, bottom: 28, left: 10 }}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="zone" tickMargin={10} interval={0} height={44} tick={<XTickWrap />} />
+        <XAxis
+          dataKey="zone"
+          tickMargin={10}
+          interval={0}
+          height={48}       
+          tick={<XTickWrap />}
+        />
         <YAxis tickFormatter={(v: number) => fmtMoney(v).replace('MXN ', '')} />
 
         <Tooltip content={<Tip />} />
