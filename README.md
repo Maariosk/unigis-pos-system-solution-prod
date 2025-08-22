@@ -7,7 +7,6 @@
   <img alt=".NET" src="https://img.shields.io/badge/Backend-ASP.NET%20Core-512BD4?logo=dotnet&logoColor=fff">
   <img alt="SQL Server" src="https://img.shields.io/badge/DB-SQL%20Server-CC2927?logo=microsoftsqlserver&logoColor=fff">
   <img alt="Azure" src="https://img.shields.io/badge/Cloud-Azure-0078D4?logo=microsoftazure&logoColor=fff">
-  <img alt="License" src="https://img.shields.io/badge/License-MIT-24BFA5">
 </p>
 
 > Plataforma integral para **gestionar** puntos de venta, **visualizarlos** en mapa, **analizar** KPIs y **reportar/exportar** datos. Incluye autenticación, CRUD, dashboard con gráficas y despliegue en Azure con CI/CD.
@@ -35,10 +34,8 @@
 ```mermaid
 
 flowchart LR
-  A[React SPA (Azure Static Web Apps)<br/>/staticwebapp.config.json]
-    -->|/auth/* & /api/* proxy|
-  B[ASP.NET Core API<br/>(App Service)]
-  B -->|EF Core / SPs| C[(SQL Server)]
+    A[React SPA (Azure Static Web Apps)<br/>/staticwebapp.config.json] --> |/auth/* & /api/* proxy| B[ASP.NET Core API<br/>(App Service)]
+    B --> |EF Core / SPs| C[(SQL Server)]
 
 ```
 
