@@ -284,3 +284,25 @@ flowchart TB
 
 ---
 
+
+### ⚠️ Cold start (App Service / BD “en frío”) — ¿por qué sucede?
+
+> Tras varios minutos sin uso —o justo después de un despliegue— el **primer** request (p. ej., el login) puede tardar mucho o incluso devolver **500/timeout**. Al **refrescar**, ya entra normal. Esto pasa porque:
+
+* 🛰️ **El App Service “despierta” el proceso**
+  Si la API estuvo inactiva, el worker se descargó de memoria. El primer hit debe **arrancar el runtime**, construir el **contenedor DI**, hacer **JIT** de partes del código y **calentar cachés**.
+
+* 🔁 **Reciclados y reinicios del worker**
+  Cambios de config, despliegues, auto-healing o updates reciclan el proceso. La **primera petición** tras ese evento vuelve a pagar el costo de arranque.
+
+* 🗄️ **Base de datos en pausa (Azure SQL Serverless)**
+  La BD puede entrar en **auto-pause** para ahorrar costos. El primer intento de conexión **reanuda** la instancia, sumando segundos y pudiendo disparar timeouts si la app no espera lo suficiente.
+
+* 🔐 **Pools y handshakes “fríos”**
+  Tras inactividad, el **pool de conexiones** puede estar vacío: hay que crear conexiones nuevas, resolver **DNS** y negociar **TLS**. Luego las siguientes peticiones ya reutilizan esos recursos.
+
+* 🧰 **Trabajo extra al arrancar**
+  Si la app ejecuta **migraciones EF Core** u otras tareas pesadas en el arranque, ese costo se paga precisamente en ese **primer** request.
+
+**En resumen:** el primer request “despierta” y prepara API/BD; por eso puede fallar o tardar. Los siguientes ya aprovechan el proceso y la base **calentados** y responden con normalidad.
+---
