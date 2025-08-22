@@ -33,9 +33,13 @@
 ## 🏗️ Arquitectura (alto nivel)
 
 ```mermaid
+
 flowchart LR
-  A[React SPA (Azure Static Web Apps)\n/staticwebapp.config.json] -- /auth/* & /api/* proxy --> B[ASP.NET Core API\n(App Service)]
-  B -- EF Core / SPs --> C[(SQL Server)]
+  A[React SPA (Azure Static Web Apps)<br/>/staticwebapp.config.json]
+    -->|/auth/* & /api/* proxy|
+  B[ASP.NET Core API<br/>(App Service)]
+  B -->|EF Core / SPs| C[(SQL Server)]
+
 ```
 
 * **SWA** sirve la SPA y **reenvía** `/auth/*` y `/api/*` a la API.
