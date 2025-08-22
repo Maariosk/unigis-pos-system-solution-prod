@@ -12,7 +12,7 @@ const COLORS = ['#22d3ee', '#a78bfa', '#34d399', '#f59e0b', '#60a5fa', '#f472b6'
 const fmtMoney = (n: number) =>
   new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
 
-// Trunca visualmente y deja el valor completo en title (tooltip nativo)
+// Trunca visualmente; el valor completo se muestra con <title> (tooltip nativo SVG)
 const truncate = (s: string, max = 22) => (s.length > max ? s.slice(0, max - 1) + '…' : s);
 
 // Sector activo con texto central que ajusta tamaño según longitud
@@ -34,8 +34,11 @@ const renderActiveShape = (props: any) => {
         textAnchor="middle"
         dominantBaseline="central"
         style={{ fontWeight: 800, fontSize: titleSize, fill: 'var(--text, #111827)' }}
+        aria-label={zone}
       >
-        <tspan title={zone}>{truncate(zone, 22)}</tspan>
+        {/* Tooltip nativo en SVG */}
+        <title>{zone}</title>
+        <tspan>{truncate(zone, 22)}</tspan>
       </text>
       <text
         x={cx}
@@ -126,7 +129,7 @@ function SalesPieComp({ data, onActiveChange }: Props) {
           align="center"
           wrapperStyle={{ paddingTop: 8 }}
           iconType="circle"
-          // Etiquetas de leyenda: elipsis + title con nombre completo
+          // Etiquetas de leyenda: elipsis + title con nombre completo (HTML)
           formatter={(value: string) => (
             <span
               title={value}
