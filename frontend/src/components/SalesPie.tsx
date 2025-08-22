@@ -12,16 +12,42 @@ const COLORS = ['#22d3ee', '#a78bfa', '#34d399', '#f59e0b', '#60a5fa', '#f472b6'
 const fmtMoney = (n: number) =>
   new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
 
+// Trunca visualmente y deja el valor completo en title (tooltip nativo)
+const truncate = (s: string, max = 22) => (s.length > max ? s.slice(0, max - 1) + '…' : s);
+
+// Sector activo con texto central que ajusta tamaño según longitud
 const renderActiveShape = (props: any) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value } = props;
+  const zone: string = String(payload?.zone ?? 'Sin zona');
+  const amount = fmtMoney(Number(value) || 0);
+
+  // Tamaño de fuente adaptativo (simple y efectivo)
+  const len = zone.length;
+  const titleSize = len <= 12 ? 18 : len <= 18 ? 16 : 14;
+
   return (
     <g>
-      <text x={cx} y={cy} dy={-6} textAnchor="middle" fontWeight={700}>
-        {payload.zone}
+      {/* Texto central */}
+      <text
+        x={cx}
+        y={cy - 4}
+        textAnchor="middle"
+        dominantBaseline="central"
+        style={{ fontWeight: 800, fontSize: titleSize, fill: 'var(--text, #111827)' }}
+      >
+        <tspan title={zone}>{truncate(zone, 22)}</tspan>
       </text>
-      <text x={cx} y={cy} dy={14} textAnchor="middle" fill="#6b7280" fontSize={12}>
-        {fmtMoney(value)}
+      <text
+        x={cx}
+        y={cy + 16}
+        textAnchor="middle"
+        dominantBaseline="central"
+        style={{ fontSize: 12, fill: 'var(--text, #111827)', opacity: 0.9 }}
+      >
+        {amount}
       </text>
+
+      {/* Sector activo + halo */}
       <Sector
         cx={cx}
         cy={cy}
@@ -49,7 +75,10 @@ function SalesPieComp({ data, onActiveChange }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const clean = useMemo(
-    () => (data ?? []).filter((d) => d && typeof d.totalSale === 'number' && d.totalSale > 0),
+    () =>
+      (data ?? [])
+        .filter((d) => d && typeof d.totalSale === 'number' && d.totalSale > 0)
+        .map((d) => ({ zone: String(d.zone ?? 'Sin zona'), totalSale: Number(d.totalSale || 0) })),
     [data]
   );
 
@@ -97,6 +126,22 @@ function SalesPieComp({ data, onActiveChange }: Props) {
           align="center"
           wrapperStyle={{ paddingTop: 8 }}
           iconType="circle"
+          // Etiquetas de leyenda: elipsis + title con nombre completo
+          formatter={(value: string) => (
+            <span
+              title={value}
+              style={{
+                display: 'inline-block',
+                maxWidth: 140,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                verticalAlign: 'middle',
+              }}
+            >
+              {value}
+            </span>
+          )}
         />
       </PieChart>
     </ResponsiveContainer>
