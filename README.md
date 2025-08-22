@@ -304,5 +304,7 @@ flowchart TB
 * 🧰 **Trabajo extra al arrancar**
   Si la app ejecuta **migraciones EF Core** u otras tareas pesadas en el arranque, ese costo se paga precisamente en ese **primer** request.
 
-**En resumen:** el primer request “despierta” y prepara API/BD; por eso puede fallar o tardar. Los siguientes ya aprovechan el proceso y la base **calentados** y responden con normalidad.
+> **Resumen:** el primer request “despierta” y prepara API/BD; por eso puede fallar o tardar.
+> Las siguientes peticiones ya aprovechan el proceso y la base calentados y responden con normalidad.
+
 ---
