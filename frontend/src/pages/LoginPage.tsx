@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+// import { Link } from 'react-router-dom'; // Registrar usuario nuevo
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 export default function LoginPage(){
@@ -93,10 +94,11 @@ export default function LoginPage(){
             Entrar
           </button>
         </form>
-
+        {/*
         <div className="mt-3 small">
           ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
         </div>
+        */}
       </div>
     </div>
   );
