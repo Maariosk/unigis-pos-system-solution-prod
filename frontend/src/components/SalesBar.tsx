@@ -36,7 +36,7 @@ const XTickWrap = (props: any) => {
   const dyStart = lines.length === 1 ? 16 : lines.length === 2 ? 10 : 6;
 
   return (
-    <text x={x} y={y} textAnchor="middle" fill="#475569">
+    <text x={x} y={y} textAnchor="middle" fill="#475569" fontSize={12}>
       {lines.map((ln, i) => (
         <tspan key={i} x={x} dy={i === 0 ? dyStart : 14}>
           {ln}
@@ -85,49 +85,50 @@ const Tip = ({ active, label, payload }: any) => {
 
 function SalesBar({
   data,
-  height,
-  aspect = 2,           
-  minHeight = 220,      
+  height = 300,     
 }: {
   data: Item[];
   height?: number;
-  aspect?: number;
-  minHeight?: number;
 }) {
   const sorted = useMemo(() => [...(data ?? [])].sort((a, b) => b.totalSale - a.totalSale), [data]);
 
   if (!sorted.length) {
     return (
-      <div className="d-flex align-items-center justify-content-center text-muted" style={{ height: 300 }}>
+      <div className="d-flex align-items-center justify-content-center text-muted" style={{ height }}>
         Sin datos para mostrar
       </div>
     );
-    }
-
-  // Props responsivos para ResponsiveContainer
-  const containerProps: any = { width: '100%', debounce: 50 };
-  if (typeof height === 'number' && height > 0) {
-    containerProps.height = height;
-  } else {
-    containerProps.aspect = aspect;
-    containerProps.minHeight = minHeight;
   }
 
+  const yDomain: [number, any] = [0, (dataMax: number) => Math.ceil(dataMax * 1.15)];
+
   return (
-    <ResponsiveContainer {...containerProps}>
-      <ComposedChart data={sorted} margin={{ top: 18, right: 28, bottom: 28, left: 10 }}>
+    <ResponsiveContainer width="100%" height={height}>
+      <ComposedChart data={sorted} margin={{ top: 36, right: 20, bottom: 56, left: 12 }}>
         <CartesianGrid strokeDasharray="3 3" />
+        <Legend
+          verticalAlign="top"
+          align="left"
+          height={20}              
+          iconType="plainline"
+          wrapperStyle={{ lineHeight: '20px' }}
+        />
         <XAxis
           dataKey="zone"
-          tickMargin={10}
           interval={0}
-          height={48}       
+          tickMargin={8}
+          height={50}            
           tick={<XTickWrap />}
+          scale="point"
         />
-        <YAxis tickFormatter={(v: number) => fmtMoney(v).replace('MXN ', '')} />
+        <YAxis
+          allowDecimals={false}
+          domain={yDomain}
+          padding={{ top: 8 }}
+          tickFormatter={(v: number) => fmtMoney(v).replace('MXN ', '')}
+        />
 
         <Tooltip content={<Tip />} />
-        <Legend />
 
         <Line
           type="monotone"
@@ -135,19 +136,14 @@ function SalesBar({
           name="Venta"
           stroke={LINE_COLOR}
           strokeWidth={2.5}
-          dot={false}
+          strokeLinecap="round"
+          dot={false}            
           isAnimationActive
           animationBegin={120}
           animationDuration={700}
         />
 
-        <Scatter
-          dataKey="totalSale"
-          name=""
-          legendType="none"
-          shape={<PulsingDot />}
-          isAnimationActive
-        >
+        <Scatter dataKey="totalSale" name="" legendType="none" shape={<PulsingDot />} isAnimationActive>
           {sorted.map((_, i) => (
             <Cell key={i} fill={COLORS[i % COLORS.length]} />
           ))}
