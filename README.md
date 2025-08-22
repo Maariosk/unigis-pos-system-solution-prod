@@ -33,8 +33,8 @@
 
 ```mermaid
 flowchart LR
-  A[React SPA\n(Azure Static Web Apps)\n/staticwebapp.config.json] -->|/auth/* & /api/* proxy| B[ASP.NET Core API\n(App Service)]
-  B -->|EF Core / SPs| C[(SQL Server)]
+  A["React SPA (SWA)"] -->|proxy /auth and /api| B["ASP.NET Core API (App Service)"]
+  B -->|EF Core + SPs| C[(SQL Server)]
 ```
 
 * **SWA** sirve la SPA y **reenvía** `/auth/*` y `/api/*` a la API.
